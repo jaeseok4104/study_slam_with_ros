@@ -1,0 +1,13 @@
+<launch>
+    <arg name="project" default="study_slam_with_ros"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find study_slam_with_ros)/config/params.yaml" command="load" />
+
+    <!--- SLAM -->
+    <include file="$(find study_slam_with_ros)/launch/module/module_study_slam.launch" />
+
+    <!-- - Run Rviz -->
+    <!-- <include file="$(find study_slam_with_ros)/launch/include/module_rviz.launch" /> -->
+
+</launch>

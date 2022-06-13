@@ -1,0 +1,5 @@
+<launch>
+    <arg name="project" default="study_slam_with_ros"/>
+    
+    <node pkg="$(arg project)" type="$(arg project)_FeatureTracker"   name="$(arg project)_FeatureTracker"    output="screen" 	respawn="true"/>
+</launch>
