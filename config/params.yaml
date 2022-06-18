@@ -1,5 +1,5 @@
 study_slam:
 
-  left_camera_topic: "camera0"
-  right_camera_topic: "camera1"
+  left_camera_topic: "/cam0/image_raw"
+  right_camera_topic: "/cam1/image_raw"
   imu_topic: "imu0"
