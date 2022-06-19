@@ -3,3 +3,13 @@ study_slam:
   left_camera_topic: "/cam0/image_raw"
   right_camera_topic: "/cam1/image_raw"
   imu_topic: "imu0"
+
+  extrinsic: [1, 0, 0, 0,
+              0, 1,  0, 0,
+              0, 0,  1, 0]
+  left_intrinsic: [1, 0, 0,
+                   0, 1, 0,
+                   0, 0, 1]
+  right_intrinsic: [1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1]

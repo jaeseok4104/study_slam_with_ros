@@ -24,7 +24,8 @@ private:
     void RightImageHandler(const sensor_msgs::Image::ConstPtr& msg);
 
     void Tracking(const cv::Mat& left_image, const cv::Mat& right_image);
-    std::vector<Eigen::Vector3d> Triangulation(const std::vector<cv::KeyPoint> left_features, const std::vector<cv::KeyPoint> right_feature, const Eigen::Matrix4d projection_matrix);
+    std::vector<Eigen::Vector3d> Triangulation(const std::vector<cv::KeyPoint> left_features, const std::vector<cv::KeyPoint> right_features, const std::vector<Eigen::MatrixXd> projection_matrix);
+    double PointToPointDistance2D(const Eigen::Vector2d& x_1, const Eigen::Vector2d& x_2);
 
     cv::Ptr<cv::FeatureDetector> orb_feature_detector_;
     cv::Ptr<cv::DescriptorMatcher> orb_feature_matcher_;

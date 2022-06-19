@@ -3,7 +3,7 @@
 FeatureTracker::FeatureTracker(){
 
     orb_feature_detector_ = cv::ORB::create();
-    orb_feature_detector_ = cv::DescriptorMatcher::create("FlannBased");
+    orb_feature_matcher_ = cv::DescriptorMatcher::create("FlannBased");
 
     sub_left_image_ = nh_.subscribe<sensor_msgs::Image>(
         left_image_topic_, 1, &FeatureTracker::LeftImageHandler, this, ros::TransportHints().tcpNoDelay());
@@ -82,13 +82,50 @@ void FeatureTracker::Tracking(const cv::Mat& left_image, const cv::Mat& right_im
     std::vector<cv::DMatch> feature_correspondence;
     orb_feature_matcher_->match(left_features_descriptor, right_features_descriptor, feature_correspondence);
 
-    
-}
-
-std::vector<Eigen::Vector3d> Triangulation(const std::vector<cv::KeyPoint> left_features, const std::vector<cv::KeyPoint> right_feature,
- const Eigen::Matrix4d projection_matrix) {
 
 }
+
+std::vector<Eigen::Vector3d> FeatureTracker::Triangulation(const std::vector<cv::KeyPoint> left_features, const std::vector<cv::KeyPoint> right_features,
+ const std::vector<Eigen::MatrixXd> projection_matrix) {
+    std::vector<Eigen::Vector3d> x_1;
+    for(auto iter : left_features)
+        x_1.emplace_back(iter.pt.x, iter.pt.y, 1);
+    std::vector<Eigen::Vector3d> x_2;
+    for(auto iter : right_features)
+        x_2.emplace_back(iter.pt.x, iter.pt.y, 1);
+
+    // Calculate Initial Guess
+    std::vector<Eigen::Vector3d> initial_guess;
+    for(int i = 0; i < x_1.size(); i++){
+        Eigen::Matrix4d A;
+        A.row(0) = x_1[i].y() * projection_matrix[LEFT_CAM].row(2) - projection_matrix[LEFT_CAM].row(1);
+        A.row(1) = projection_matrix[LEFT_CAM].row(0) - x_1[i].y() * projection_matrix[RIGHT_CAM].row(2);
+        A.row(2) = x_2[i].y() * projection_matrix[RIGHT_CAM].row(2) - projection_matrix[RIGHT_CAM].row(1);
+        A.row(3) = projection_matrix[RIGHT_CAM].row(0) - x_2[i].x() * projection_matrix[RIGHT_CAM].row(2);
+
+        Eigen::JacobiSVD<Eigen::Matrix4d, Eigen::ComputeThinV> svd(A);
+        Eigen::Vector4d hm_initial_guess = svd.matrixV().col(svd.matrixV().cols()-1);
+        initial_guess.emplace_back(hm_initial_guess.x(), hm_initial_guess.y(), hm_initial_guess.z());
+    }
+
+    // // Calculate optimal value using Gauss Newton
+    // for(int i = 0; i < x_1.size(); i++){
+    //     Eigen::Vector3d x_p1 = projection_matrix[LEFT_CAM] * initial_guess[i];
+    //     Eigen::Vector3d x_p2 = projection_matrix[RIGHT_CAM] * initial_guess[i];
+    //     double r = 0;
+    //     while(1){
+    //         Eigen::MatrixXd jacobian(2,3);
+    //         jacobian = 
+    //         r = PointToPointDistance2D(Eigen::Vector2d(x_1[i].x(), x_1[i].y()), Eigen::Vector2d(x_p1.x(), x_p1.y())) + 
+    //         PointToPointDistance2D(Eigen::Vector2d(x_2[i].x(), x_2[i].y()), Eigen::Vector2d(x_p2.x(), x_p2.y()));
+    //     }
+    // }
+}
+
+double FeatureTracker::PointToPointDistance2D(const Eigen::Vector2d& x_1, const Eigen::Vector2d& x_2){
+    return 0;
+}
+
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "study_slam");
