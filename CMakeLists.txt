@@ -50,7 +50,11 @@ link_directories(
   ${OpenCV_LIBRARY_DIRS}
 )
 
-add_library(parameter_loader src/ParameterLoader.cpp include/ParameterLoader.h)
+add_library(parameter_loader
+            src/ParameterLoader.cpp
+            include/ParameterLoader.h
+            include/opencv_lambda_parallel_for.h
+)
 target_link_libraries(parameter_loader ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen)
 
 add_executable(${PROJECT_NAME}_FeatureTracker src/FeatureTracker.cpp)

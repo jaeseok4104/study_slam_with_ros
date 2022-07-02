@@ -1,6 +1,6 @@
 #include "FeatureTracker.h"
 
-FeatureTracker::FeatureTracker(){
+FeatureTracker::FeatureTracker() {
 
     orb_feature_detector_ = cv::ORB::create();
     orb_feature_matcher_ = cv::DescriptorMatcher::create("FlannBased");
@@ -61,7 +61,7 @@ void FeatureTracker::SyncData(){
             right_image_queue_.pop();
             sync_mutex_.unlock();
 
-            Tracking(left_image, right_image);
+            // Tracking(left_image, right_image);
            }
         }
 
@@ -72,17 +72,23 @@ void FeatureTracker::SyncData(){
 
 void FeatureTracker::Tracking(const cv::Mat& left_image, const cv::Mat& right_image){
     std::vector<cv::KeyPoint> left_features;
-    cv::Mat left_features_descriptor;
-    orb_feature_detector_->detectAndCompute(left_image, cv::noArray(), left_features, left_features_descriptor);
-
     std::vector<cv::KeyPoint> right_features;
+    cv::Mat left_features_descriptor;
     cv::Mat right_features_descriptor;
-    orb_feature_detector_->detectAndCompute(right_image, cv::noArray(), right_features, right_features_descriptor);
+    GridFeatureExtract(left_image, right_image, 5, 5, &left_features, &right_features, &left_features_descriptor, &right_features_descriptor);
 
-    std::vector<cv::DMatch> feature_correspondence;
-    orb_feature_matcher_->match(left_features_descriptor, right_features_descriptor, feature_correspondence);
+    // std::vector<cv::DMatch> feature_correspondence;
+    // orb_feature_matcher_->match(left_features_descriptor, right_features_descriptor, feature_correspondence);
+}
 
-
+void FeatureTracker::GridFeatureExtract(const cv::Mat& left_image, const cv::Mat right_image, int x_grid_size, int y_grid_size,
+                                        std::vector<cv::KeyPoint>* left_features, std::vector<cv::KeyPoint>* right_features, cv::Mat* left_features_descriptor, cv::Mat* right_features_descriptor){
+    std::cout <<" - "<< std::endl;
+    // cv::parallel_for_(cv::Range(0, x_grid_size * y_grid_size), LambdaBody([&](const cv::Range &range){
+    //         std::cout << range.start << " - " << range.end << std::endl;
+    //     // orb_feature_detector_->detectAndCompute(left_image, cv::noArray(), *left_features, *left_features_descriptor);
+    //     // orb_feature_detector_->detectAndCompute(right_image, cv::noArray(), *right_features, *right_features_descriptor);
+    // }));
 }
 
 std::vector<Eigen::Vector3d> FeatureTracker::Triangulation(const std::vector<cv::KeyPoint> left_features, const std::vector<cv::KeyPoint> right_features,
@@ -96,17 +102,19 @@ std::vector<Eigen::Vector3d> FeatureTracker::Triangulation(const std::vector<cv:
 
     // Calculate Initial Guess
     std::vector<Eigen::Vector3d> initial_guess;
-    for(int i = 0; i < x_1.size(); i++){
-        Eigen::Matrix4d A;
-        A.row(0) = x_1[i].y() * projection_matrix[LEFT_CAM].row(2) - projection_matrix[LEFT_CAM].row(1);
-        A.row(1) = projection_matrix[LEFT_CAM].row(0) - x_1[i].y() * projection_matrix[RIGHT_CAM].row(2);
-        A.row(2) = x_2[i].y() * projection_matrix[RIGHT_CAM].row(2) - projection_matrix[RIGHT_CAM].row(1);
-        A.row(3) = projection_matrix[RIGHT_CAM].row(0) - x_2[i].x() * projection_matrix[RIGHT_CAM].row(2);
+    cv::parallel_for_(cv::Range(0, x_1.size()), LambdaBody([&](const cv::Range &range){
+        for(int i = range.start; i < range.end; i++){
+            Eigen::Matrix4d A;
+            A.row(0) = x_1[i].x() * projection_matrix[LEFT_CAM].row(2) - projection_matrix[LEFT_CAM].row(0);
+            A.row(1) = x_1[i].y() * projection_matrix[LEFT_CAM].row(2) - projection_matrix[LEFT_CAM].row(1);
+            A.row(2) = x_2[i].x() * projection_matrix[RIGHT_CAM].row(2) - projection_matrix[RIGHT_CAM].row(0);
+            A.row(3) = x_1[i].y() * projection_matrix[RIGHT_CAM].row(2) - projection_matrix[RIGHT_CAM].row(1);
 
-        Eigen::JacobiSVD<Eigen::Matrix4d, Eigen::ComputeThinV> svd(A);
-        Eigen::Vector4d hm_initial_guess = svd.matrixV().col(svd.matrixV().cols()-1);
-        initial_guess.emplace_back(hm_initial_guess.x(), hm_initial_guess.y(), hm_initial_guess.z());
-    }
+            Eigen::JacobiSVD<Eigen::Matrix4d, Eigen::ComputeThinV> svd(A);
+            Eigen::Vector4d hm_initial_guess = svd.matrixV().col(svd.matrixV().cols()-1);
+            initial_guess.emplace_back(hm_initial_guess.x(), hm_initial_guess.y(), hm_initial_guess.z());
+        }
+    }));
 
     // // Calculate optimal value using Gauss Newton
     // for(int i = 0; i < x_1.size(); i++){
