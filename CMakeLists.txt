@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenMP REQUIRED)
 find_package(OpenCV REQUIRED QUIET)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 3.3)
 
 catkin_package(
  INCLUDE_DIRS include
@@ -49,8 +50,12 @@ link_directories(
   ${OpenCV_LIBRARY_DIRS}
 )
 
-add_library(parameter_loader src/ParameterLoader.cpp include/ParameterLoader.h)
-target_link_libraries(parameter_loader ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+add_library(parameter_loader
+            src/ParameterLoader.cpp
+            include/ParameterLoader.h
+            include/opencv_lambda_parallel_for.h
+)
+target_link_libraries(parameter_loader ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen)
 
 add_executable(${PROJECT_NAME}_FeatureTracker src/FeatureTracker.cpp)
-target_link_libraries(${PROJECT_NAME}_FeatureTracker ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} parameter_loader)
+target_link_libraries(${PROJECT_NAME}_FeatureTracker ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} parameter_loader Eigen3::Eigen)
