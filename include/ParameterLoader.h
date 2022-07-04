@@ -22,9 +22,11 @@ protected:
     Eigen::MatrixXd extrinsic_mat_;
     std::vector<double> left_intrinsic_mat_vector_;
     std::vector<double> right_intrinsic_mat_vector_;
+    std::vector<double> left_distortion_coeff_vector_;
+    std::vector<double> right_distortion_coeff_vector_;
     std::vector<Eigen::Matrix3d> intrinsic_mat_;
     std::vector<Eigen::MatrixXd> camera_projection_mat_;
-    
+    std::vector<Eigen::Vector4d> distortion_coeff_;
 
     ParameterLoader();
 };

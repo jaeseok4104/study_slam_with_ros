@@ -8,9 +8,13 @@ ParameterLoader::ParameterLoader(){
     nh_.param<std::vector<double>>("study_slam/extrinsic", extrinsic_mat_vector_, std::vector<double>());
     nh_.param<std::vector<double>>("study_slam/left_intrinsic", left_intrinsic_mat_vector_, std::vector<double>());
     nh_.param<std::vector<double>>("study_slam/right_intrinsic", right_intrinsic_mat_vector_, std::vector<double>());
+    nh_.param<std::vector<double>>("study_slam/left_distortion", left_distortion_coeff_vector_, std::vector<double>());
+    nh_.param<std::vector<double>>("study_slam/right_distortion", right_distortion_coeff_vector_, std::vector<double>());
     extrinsic_mat_ = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extrinsic_mat_vector_.data(), 3, 4);
     intrinsic_mat_.push_back(Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(left_intrinsic_mat_vector_.data(), 3, 3));
     intrinsic_mat_.push_back(Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(right_intrinsic_mat_vector_.data(), 3, 3));
+    distortion_coeff_.push_back(Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(left_distortion_coeff_vector_.data(), 4, 1));
+    distortion_coeff_.push_back(Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(right_distortion_coeff_vector_.data(), 4, 1));
 
     camera_projection_mat_.push_back(intrinsic_mat_[LEFT_CAM] * Eigen::MatrixXd::Identity(3,4));
     camera_projection_mat_.push_back(intrinsic_mat_[RIGHT_CAM] * extrinsic_mat_);
